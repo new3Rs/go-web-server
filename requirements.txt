@@ -1,0 +1,6 @@
+#web.py
+bottle==0.12.13
+paste==2.0.3
+requests==2.18.4
+pyquery==1.4.0
+git+https://github.com/new3Rs/go_translator.git
