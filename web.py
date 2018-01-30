@@ -72,7 +72,11 @@ def translate_web_page():
     head = d('head')
     base = head.children('base')
     if len(base) == 0:
-        d(head.children('*')[0]).before('<base>')
+        head_children = head.children('*')
+        if len(head_children) > 0:
+            d(head.children('*')[0]).before('<base>')
+        else:
+            head.append('<base>')
         base = head.children('base')
     parsed_url = urlparse(url)
     base.attr['href'] = parsed_url.scheme + '://' + parsed_url.netloc + parsed_url.path
