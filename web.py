@@ -64,6 +64,7 @@ def translate():
 
 @get('/translate-web-page')
 def translate_web_page():
+    translator.load_dic()
     url = request.query.get('url', '')
     if url == '':
         return 'NG'
