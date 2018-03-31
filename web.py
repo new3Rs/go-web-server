@@ -96,7 +96,7 @@ def images(filepath):
 @get('/')
 def index():
     return template("""
-    <form action="/gnugo" method="post">
+    <form action="http://35.203.161.100/gnugo" method="post">
     <input type="text" name="move" value="est">
     <input type="text" name="sgf" value="(;SZ[19])">
     <input type="text" name="num">
@@ -141,7 +141,7 @@ def gnugo():
     mn = request.forms.get('mn')
     if mn:
         args.extend(['--until', mn])
-    p = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=False, encoding='utf8')
+    p = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=False, universal_newlines=True)
     try:
         outs, errs = p.communicate(input=sgf, timeout=TIMEOUT)
         print('gnugo done', c)
