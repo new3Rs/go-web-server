@@ -2,10 +2,12 @@ import sys
 import os
 import re
 from urllib.parse import urlparse
+from subprocess import Popen, PIPE, TimeoutExpired, check_output
+from queue import Queue
 import requests
 from requests.adapters import HTTPAdapter
 from pyquery import PyQuery as pq
-from bottle import hook, get, post, run, request, response, abort, static_file
+from bottle import hook, get, post, run, template, request, response, abort, static_file
 import paste
 from go_translator.go_translator import GoTranslator as Translator
 
@@ -89,6 +91,68 @@ def translate_web_page():
 @get('/js/<filepath:path>')
 def images(filepath):
     return static_file(filepath, root='./public/js/')
+
+
+@get('/')
+def index():
+    return template("""
+    <form action="/gnugo" method="post">
+    <input type="text" name="move" value="est">
+    <input type="text" name="sgf" value="(;SZ[19])">
+    <input type="text" name="num">
+    <button>Submit</button>
+    </form>
+    """)
+
+
+gnugo_long_lock = Queue() # finishかaftermathの場合、1リクエストずつ処理する。
+gnugo_long_lock.put(1, block=False)
+count = 0
+@post('/gnugo')
+def gnugo():
+    TIMEOUT = 29
+    print('gnugo')
+    global count
+    count += 1
+    c = count
+    print('gnugo start', c)
+
+    sgf = request.forms.sgf
+    if not (sgf and request.forms.move == 'est'):
+        print('gnugo Bad Request', c)
+        abort(400, 'Bad Request')
+
+    method = request.forms.get('method', 'estimate')
+    if method != 'estimate':
+        try:
+            gnugo_long_lock.get(block=True, timeout=10)
+        except:
+            print('gnugo wait timeout', c)
+            abort(408, 'Request Timeout')
+            return
+    args = [
+        'gnugo',
+        '--' + request.forms.get('rule', 'japanese') + '-rules',
+        '--score',
+        method,
+        '--infile',
+        '-'
+    ]
+    mn = request.forms.get('mn')
+    if mn:
+        args.extend(['--until', mn])
+    p = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=False, encoding='utf8')
+    try:
+        outs, errs = p.communicate(input=sgf, timeout=TIMEOUT)
+        print('gnugo done', c)
+        return outs
+    except TimeoutExpired:
+        p.kill()
+        print('gnugo process timeout', c)
+        abort(408, 'Request Timeout')
+    finally:
+        if method != 'estimate':
+            gnugo_long_lock.put(1, block=False)
 
 
 #app = default_app()
