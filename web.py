@@ -85,6 +85,8 @@ def translate_web_page():
     base.attr['href'] = parsed_url.scheme + '://' + parsed_url.netloc + parsed_url.path
     parsed_url = urlparse(request.url)
     head.append('<script src="{}://{}/js/translate.js"> </script>'.format(parsed_url.scheme, parsed_url.netloc)) # pyQueryのバグ？ </script>の前に文字がないと<script>が開放になる
+    if 'sports.sina.cn' in url: # 新浪体育のモバイルサイト。フォントをJSで初期化するのでその代わりを務める
+        d('html').attr('style', 'font-size: 62px;')
     result = d.outerHtml()
     return result
 
