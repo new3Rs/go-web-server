@@ -55,10 +55,11 @@ def translate():
     text = request.forms.get('text', '')
     fro = request.forms.get('fro', '')
     to = request.forms.get('to', '')
+    headline = request.forms.get('headline', 'false')
     if text == '' or fro == '':
         return ''
-    translate = lambda t: translator.translate(t, fro) if to == '' else translator.translate(t, fro, to)
-    if fro == 'CH':
+    translate = lambda t: translator.translate(t, fro + to)
+    if fro == 'CH' and headline == 'true':
         result = ' '.join(map(translate, text.split(' ')))
     else:
         result = translate(text)

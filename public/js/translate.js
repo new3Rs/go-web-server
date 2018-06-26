@@ -15,20 +15,23 @@ function post(url, data) {
     });
 }
 
-async function translate(text, fro, to) {
+async function translate(text, fro, to, headline) {
     const data = new FormData();
     data.append('text', text);
     data.append('fro', fro);
     if (to) {
         data.append('to', to);
     }
+    if (headline) {
+        data.append('headline', headline.toString())
+    }
     return await post(location.origin + '/translate', data);
 }
 
-async function process(dom, lang) {
+async function process(dom, lang, headline) {
     if (dom.nodeType === 3) {
         if (!/^[\x20-\x7E\s]*$/.test(dom.nodeValue)) { // ASCII文字列でないなら
-            const translated = await translate(dom.nodeValue, lang);
+            const translated = await translate(dom.nodeValue, lang, undefined, headline);
             if (translated) {
                 dom.nodeValue = translated;
             }
@@ -36,15 +39,15 @@ async function process(dom, lang) {
     } else if (dom.nodeType === 1 && ['NOSCRIPT', 'SCRIPT', 'STYLE', 'IFRAME'].indexOf(dom.tagName) < 0) {
         const style = window.getComputedStyle(dom);
         if (style.display !== 'none' && style.visibility !== 'hidden') {
-            await translateTree(dom, lang);
+            await translateTree(dom, lang, /H[1-9]/.test(dom.tagName));
         }
     }
 }
 
-function translateTree(node, lang) {
+function translateTree(node, lang, headline) {
     const promises = [];
     node.childNodes.forEach(function(e) {
-        promises.push(process(e, lang));
+        promises.push(process(e, lang, headline));
     });
     return Promise.all(promises);
 }
