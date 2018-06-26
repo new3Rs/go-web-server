@@ -16,6 +16,7 @@ function post(url, data) {
 }
 
 async function translate(text, fro, to, headline) {
+    text = text.replace(/\r?\n/g, '');
     const data = new FormData();
     data.append('text', text);
     data.append('fro', fro);
