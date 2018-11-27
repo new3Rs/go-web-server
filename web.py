@@ -24,33 +24,51 @@ def get_with_retry(url, max_retries=5):
         print(sys.exc_info())
         return None
 
-def uni_pq_from(url):
-    r = get_with_retry(url)
-    if r is None:
-        return None
-
-    r.encoding = r.apparent_encoding
-    d = pq(r.text)
+def get_charset(html):
+    d = pq(html)
     charset = d.find('head meta[charset]')
     if len(charset) > 0:
-        charset = d.find('head meta[charset]')
+        return charset.attr('charset')
+    charset = d.find('head meta[http-equiv="content-type"]')
+    if len(charset) > 0:
+        match = re.search(r'charset=([^;]*)', charset.attr('content'))
+        if match:
+            return match.group(1)
+    charset = d.find('head meta[http-equiv="Content-Type"]')
+    if len(charset) > 0:
+        match = re.search(r'charset=([^;]*)', charset.attr('content'))
+        if match:
+            return match.group(1)
+    return None
+
+def set_charset(d, charset):
+    charset = d.find('head meta[charset]')
+    if len(charset) > 0:
         charset.attr('charset', 'UTF-8')
     charset = d.find('head meta[http-equiv="content-type"]')
     if len(charset) > 0:
         match = re.search(r'charset=([^;]*)', charset.attr('content'))
         if match:
-            charset = d.find('head meta[http-equiv="content-type"]')
             charset.attr('content', re.sub(r'(?<=charset=)[^;]*', 'UTF-8', charset.attr('content')))
     charset = d.find('head meta[http-equiv="Content-Type"]')
     if len(charset) > 0:
         match = re.search(r'charset=([^;]*)', charset.attr('content'))
         if match:
-            charset = d.find('head meta[http-equiv="Content-Type"]')
             charset.attr('content', re.sub(r'(?<=charset=)[^;]*', 'UTF-8', charset.attr('content')))
 
-    if r.encoding == 'EUC-KR' or r.encoding == 'KSC5601':
+def uni_pq_from(url):
+    r = get_with_retry(url)
+    if r is None:
+        return None
+
+    charset = get_charset(r.content)
+    r.encoding = r.apparent_encoding if charset is None else charset
+    d = pq(r.text)
+    set_charset(d, 'UTF-8')
+    encode = r.encoding.upper()
+    if encode == 'EUC-KR' or encode == 'KSC5601':
         d.attr('lang', 'ko')
-    elif r.encoding == 'GB2312':
+    elif encode == 'GB2312':
         d.attr('lang', 'zh')
     return d
 
