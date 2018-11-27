@@ -29,21 +29,30 @@ def uni_pq_from(url):
     if r is None:
         return None
 
-    encode = 'utf-8'
-    d = pq(r.content)
+    r.encoding = r.apparent_encoding
+    d = pq(r.text)
     charset = d.find('head meta[charset]')
     if len(charset) > 0:
-        encode = charset.attr('charset')
-    else:
-        charset = d.find('head meta[http-equiv="content-type"]')
-        if len(charset) == 0:
+        charset = d.find('head meta[charset]')
+        charset.attr('charset', 'UTF-8')
+    charset = d.find('head meta[http-equiv="content-type"]')
+    if len(charset) > 0:
+        match = re.search(r'charset=([^;]*)', charset.attr('content'))
+        if match:
+            charset = d.find('head meta[http-equiv="content-type"]')
+            charset.attr('content', re.sub(r'(?<=charset=)[^;]*', 'UTF-8', charset.attr('content')))
+    charset = d.find('head meta[http-equiv="Content-Type"]')
+    if len(charset) > 0:
+        match = re.search(r'charset=([^;]*)', charset.attr('content'))
+        if match:
             charset = d.find('head meta[http-equiv="Content-Type"]')
-        if len(charset) > 0:
-            match = re.search(r'charset=([^;]*)', charset.attr('content'))
-            if match:
-                encode = match.group(1)
-    r.encoding = encode
-    return pq(r.text)
+            charset.attr('content', re.sub(r'(?<=charset=)[^;]*', 'UTF-8', charset.attr('content')))
+
+    if r.encoding == 'EUC-KR' or r.encoding == 'KSC5601':
+        d.attr('lang', 'ko')
+    elif r.encoding == 'GB2312':
+        d.attr('lang', 'zh')
+    return d
 
 
 @hook('after_request')

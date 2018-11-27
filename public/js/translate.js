@@ -54,8 +54,23 @@ function translateTree(node, lang, headline) {
 }
 
 window.addEventListener('load', async function() {
-    const match = location.search.match(/lang=([A-Z]{2})/);
-    const lang = match ? match[1] : 'CH';
+    let lang;
+    switch (document.documentElement.lang) {
+    case 'ko':
+    case 'kr':
+        lang = 'KO';
+        break;
+    case 'zh':
+    case 'zh-CN':
+        lang = 'CH';
+        break
+    default:
+        break;
+    }
+    if (lang == null) {
+        const match = location.search.match(/lang=([A-Z]{2})/);
+        lang = match ? match[1] : 'CH';
+    }
     document.title = await translate(document.title, lang);
     translateTree(document.body, lang);
 });
