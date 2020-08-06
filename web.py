@@ -120,7 +120,7 @@ def translate_web_page():
     return result
 
 @get('/js/<filepath:path>')
-def images(filepath):
+def js(filepath):
     return static_file(filepath, root='./public/js/')
 
 
@@ -184,6 +184,16 @@ def gnugo():
     finally:
         if method != 'estimate':
             gnugo_long_lock.put(1, block=False)
+
+@hook('after_request')
+def isolate():
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
+    response.headers['Cross-Origin-Embedder-Policy'] = 'require-corp'
+
+@get('/a_teacher_of_go/<filepath:path>')
+def a_teacher_of_go(filepath):
+    return static_file(filepath, root='./public/a_teacher_of_go/')
+
 
 
 #app = default_app()
