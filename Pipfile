@@ -6,7 +6,7 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-bottle = "==0.12.13"
+bottle = "==0.12.19"
 paste = "==2.0.3"
 requests = "==2.20.0"
 pyquery = "==1.4.0"
